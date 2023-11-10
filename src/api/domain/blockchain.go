@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -12,15 +14,20 @@ type Blockchain struct {
 }
 
 func NewBlockchain() *Blockchain {
+	b := &Block{}
 	bc := new(Blockchain)
-	bc.CreateBlock(0, "Initial hash")
+	bc.CreateBlock(0, b.Hash())
 	return bc
 }
 
-func (bc *Blockchain) CreateBlock(nonce int, previousHash string) *Block {
+func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 	block := NewBlock(nonce, previousHash)
 	bc.chain = append(bc.chain, block)
 	return block
+}
+
+func (bc *Blockchain) LastBlock() *Block {
+	return bc.chain[len(bc.chain)-1]
 }
 
 func (bc *Blockchain) Print() {
@@ -34,12 +41,12 @@ func (bc *Blockchain) Print() {
 
 type Block struct {
 	nonce        int
-	previousHash string
+	previousHash [32]byte
 	timestamp    int64
 	transactions []string
 }
 
-func NewBlock(nonce int, previousHash string) *Block {
+func NewBlock(nonce int, previousHash [32]byte) *Block {
 	b := new(Block)
 	b.timestamp = time.Now().UnixNano()
 	b.nonce = nonce
@@ -50,6 +57,25 @@ func NewBlock(nonce int, previousHash string) *Block {
 func (b *Block) Print() {
 	fmt.Printf("timestamp      %d\n", b.timestamp)
 	fmt.Printf("nonce      %d\n", b.nonce)
-	fmt.Printf("previous_hash      %s\n", b.previousHash)
+	fmt.Printf("previous_hash      %x\n", b.previousHash)
 	fmt.Printf("transactions      %s\n", b.transactions)
+}
+
+func (b *Block) Hash() [32]byte {
+	m, _ := json.Marshal(b)
+	return sha256.Sum256([]byte(m))
+}
+
+func (b *Block) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Timestamp    int64
+		Nonce        int
+		PreviousHash [32]byte
+		Transactions []string
+	}{
+		Timestamp:    b.timestamp,
+		Nonce:        b.nonce,
+		PreviousHash: b.previousHash,
+		Transactions: b.transactions,
+	})
 }

@@ -12,8 +12,12 @@ func init() {
 
 func main() {
 	blockchain := domain.NewBlockchain()
-	blockchain.CreateBlock(5, "hash test 1")
-	blockchain.CreateBlock(2, "hash test 2")
-	blockchain.CreateBlock(10, "hash test 3")
+
+	previousHash := blockchain.LastBlock().Hash()
+	blockchain.CreateBlock(10, previousHash)
+
+	previousHash = blockchain.LastBlock().Hash()
+	blockchain.CreateBlock(2, previousHash)
+
 	blockchain.Print()
 }
